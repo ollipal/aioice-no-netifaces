@@ -10,7 +10,7 @@ about_file = os.path.join(root_dir, "src", "aioice", "about.py")
 with open(about_file, encoding="utf-8") as fp:
     exec(fp.read(), about)
 
-readme_file = os.path.join(root_dir, "README.rst")
+readme_file = os.path.join(root_dir, "README.md")
 with open(readme_file, encoding="utf-8") as f:
     long_description = f.read()
 
@@ -19,6 +19,7 @@ setuptools.setup(
     version=about["__version__"],
     description=about["__summary__"],
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url=about["__uri__"],
     author=about["__author__"],
     author_email=about["__email__"],
@@ -39,5 +40,11 @@ setuptools.setup(
     package_dir={"": "src"},
     package_data={"aioice": ["py.typed"]},
     packages=["aioice"],
-    install_requires=["dnspython>=2.0.0", "netifaces"],
+    install_requires=["dnspython>=2.0.0"],
+    extras_require = {
+    "dev": [
+        "wheel",
+        "twine",
+    ]
+}
 )

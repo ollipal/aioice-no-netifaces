@@ -10,8 +10,6 @@ import threading
 from itertools import count
 from typing import Dict, List, Optional, Set, Text, Tuple, Union, cast
 
-import netifaces
-
 from . import mdns, stun, turn
 from .candidate import Candidate, candidate_foundation, candidate_priority
 from .utils import random_string
@@ -66,16 +64,24 @@ def get_host_addresses(use_ipv4: bool, use_ipv6: bool) -> List[str]:
     """
     Get local IP addresses.
     """
-    addresses = []
-    for interface in netifaces.interfaces():
-        ifaddresses = netifaces.ifaddresses(interface)
-        for address in ifaddresses.get(socket.AF_INET, []):
-            if use_ipv4 and address["addr"] != "127.0.0.1":
-                addresses.append(address["addr"])
-        for address in ifaddresses.get(socket.AF_INET6, []):
-            if use_ipv6 and address["addr"] != "::1" and "%" not in address["addr"]:
-                addresses.append(address["addr"])
-    return addresses
+
+    if use_ipv6:
+        raise RuntimeError("aioice-no-netifaces does not support ipv6 yet")
+
+    # Adapted from: https://stackoverflow.com/a/28950776
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        # Doesn't even have to be reachable
+        s.connect(('10.254.254.254', 1))
+        ip = s.getsockname()[0]
+    except Exception as e:
+        logger.debug("No ipv4 address found, %s", e)
+        return []
+    finally:
+        s.close()
+
+    return [ip]
 
 
 async def server_reflexive_candidate(
