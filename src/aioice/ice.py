@@ -257,6 +257,20 @@ class StunProtocol(asyncio.DatagramProtocol):
         Send a STUN message.
         """
         self.__log_debug("> %s %s", addr, message)
+
+        # A quick fix for:
+        #
+        # Exception in callback Transaction.__retry()
+        # handle: <TimerHandle when=377712.550334032 Transaction.__retry()>
+        # Traceback (most recent call last):
+        #   File "/usr/lib/python3.10/asyncio/selector_events.py", line 1053, in sendto
+        #     self._sock.sendto(data, addr)
+        # AttributeError: 'NoneType' object has no attribute 'sendto'
+        #
+        # Related: https://github.com/aiortc/aiortc/issues/85
+        if self.transport is None:
+            return
+
         self.transport.sendto(bytes(message), addr)
 
     def __log_debug(self, msg: str, *args) -> None:
